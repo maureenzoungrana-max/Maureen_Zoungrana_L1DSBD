@@ -215,3 +215,69 @@ WHERE NuméroCoureur IN (
 -- Étape 2 : supprimer ensuite les coureurs de l'équipe Festina
 DELETE FROM COUREUR
 WHERE CodeEquipe = 'FES';
+
+-- a) Liste des coureurs du Tour 2010
+SELECT NomCoureur
+FROM COUREUR;
+
+-- b) Liste des codes et noms des équipes ayant participé au Tour 2010
+SELECT CodeEquipe, NomEquipe
+FROM EQUIPE;
+
+-- c) Liste des pays qui n'ont pas eu de cyclistes pour les représenter
+SELECT CodePays, NomPays
+FROM PAYS
+WHERE CodePays NOT IN (
+    SELECT CodePays
+    FROM COUREUR
+);
+
+-- d) Liste des étapes ayant une distance d'au moins 100 km et de type Descente
+SELECT *
+FROM ETAPE
+WHERE Distance >= 100
+AND TypeEtape = 'Descente';
+
+-- e) Le nombre de coureurs par équipe
+SELECT E.CodeEquipe, E.NomEquipe, COUNT(C.NumCoureur) AS NbCoureurs
+FROM EQUIPE E
+JOIN COUREUR C
+ON E.CodeEquipe = C.CodeEquipe
+GROUP BY E.CodeEquipe, E.NomEquipe;
+
+-- f) Liste des étapes contenant des cyclistes absents parmi l'ensemble des inscrits
+SELECT E.NumEtape
+FROM ETAPE E
+WHERE (
+    SELECT COUNT(*)
+    FROM PARTICIPER P
+    WHERE P.NumEtape = E.NumEtape
+) < (
+    SELECT COUNT(*)
+    FROM COUREUR
+);
+
+-- g) Donner le vainqueur par étape
+SELECT E.NumEtape
+FROM ETAPE E
+WHERE (
+    SELECT COUNT(*)
+    FROM PARTICIPER P
+    WHERE P.NumEtape = E.NumEtape
+) < (
+    SELECT COUNT(*)
+    FROM COUREUR
+);
+
+-- h) Donner le vainqueur du Tour 2010
+SELECT C.NomCoureur, SUM(P.Temps) AS TempsTotal
+FROM COUREUR C
+JOIN PARTICIPER P
+ON C.NumCoureur = P.NumCoureur
+GROUP BY C.NumCoureur, C.NomCoureur
+HAVING COUNT(DISTINCT P.NumEtape) = (
+    SELECT COUNT(*)
+    FROM ETAPE
+)
+ORDER BY TempsTotal ASC
+LIMIT 1;
